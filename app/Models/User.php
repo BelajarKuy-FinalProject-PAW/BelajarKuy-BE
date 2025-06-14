@@ -5,7 +5,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Support\Facades\Storage; // Import Storage
+use Illuminate\Support\Facades\Storage;
 use App\Models\LearningHistory;
 
 class User extends Authenticatable
@@ -38,11 +38,12 @@ class User extends Authenticatable
         return 'https://ui-avatars.com/api/?name='.urlencode($this->name).'&color=7F9CF5&background=EBF4FF&format=svg';
     }
     
-    public function topics(){
-    return $this->belongsToMany(Topic::class, 'topic_user');
+    public function preferences(){
+    return $this->belongsToMany(Material::class, 'material_user');
     }
 
     public function learningHistories(){
     return $this->hasMany(LearningHistory::class)->orderBy('completed_at', 'desc'); // Urutkan berdasarkan yang terbaru diselesaikan
     }
+    
 }

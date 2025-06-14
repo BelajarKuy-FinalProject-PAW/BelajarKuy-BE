@@ -9,8 +9,11 @@ use App\Http\Requests\Profile\UpdateProfileRequest;
 use App\Http\Requests\Profile\UpdatePasswordRequest;
 use App\Http\Requests\Profile\UploadAvatarRequest;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log; 
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+use Laravel\Sanctum\PersonalAccessToken;
 
 
 class ProfileController extends Controller
@@ -22,9 +25,30 @@ class ProfileController extends Controller
      * @return \App\Http\Resources\UserResource
      */
     public function show(Request $request): UserResource
-    {
-        return new UserResource($request->user());
+{
+    Log::info('----------------------------------------------------');
+    Log::info('[Profile Show Attempt /api/user]');
+    Log::info('Authenticated user by $request->user(): ' . ($request->user() ? $request->user()->id . ' (' . $request->user()->email . ')' : 'No user from $request->user()'));
+    Log::info('Authenticated user by auth()->user(): ' . (auth()->user() ? auth()->user()->id . ' (' . auth()->user()->email . ')' : 'No user from auth()->user()'));
+    Log::info('Guard used for auth()->user(): ' . (auth()->getDefaultDriver())); // Melihat default guard
+    Log::info('Sanctum guard user from Auth facade: ' . (Auth::guard('sanctum')->user() ? Auth::guard('sanctum')->user()->id : 'No user from Auth::guard(\'sanctum\')'));
+
+    $bearerToken = $request->bearerToken();
+    if ($bearerToken) {
+        Log::info('[Profile Show Attempt] Bearer token found in request: ' . substr($bearerToken, 0, 10) . '...');
+        $tokenInstance = PersonalAccessToken::findToken($bearerToken);
+        if ($tokenInstance) {
+            Log::info('[Profile Show Attempt] Token found in DB by findToken(): ID ' . $tokenInstance->id . ', User ID: ' . $tokenInstance->tokenable_id . ', Name: ' . $tokenInstance->name . ', Expires at: ' . $tokenInstance->expires_at);
+        } else {
+            Log::info('[Profile Show Attempt] Token NOT found in DB by findToken().');
+        }
+    } else {
+        Log::info('[Profile Show Attempt] No bearer token found in request.');
     }
+    Log::info('----------------------------------------------------');
+
+    return new UserResource($request->user());
+}
     public function update(UpdateProfileRequest $request) // Gunakan UpdateProfileRequest
     {
         $user = $request->user();

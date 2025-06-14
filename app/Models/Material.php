@@ -10,22 +10,19 @@ class Material extends Model
     use HasFactory;
 
     protected $fillable = [
-        'title',
+        'name', // Sebelumnya title
+        'category',
         'description',
-        'topic_id', 
     ];
 
-    public function learningHistories()
-    {
-        return $this->hasMany(LearningHistory::class);
-    }
-
     /**
-     * Relasi belongsTo dengan Topic.
-     * Materi ini milik sebuah Topic.
+     * Sebuah materi memiliki banyak sub-materi.
      */
-    public function topic()
+    public function subMaterials()
     {
-        return $this->belongsTo(Topic::class);
+        return $this->hasMany(SubMaterial::class);
+    }
+    public function preferredByUsers(){
+    return $this->belongsToMany(User::class, 'material_user');
     }
 }

@@ -6,10 +6,12 @@ use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
-use App\Http\Controllers\Api\ProfileController; // << PASTIKAN IMPORT INI ADA
-use App\Http\Controllers\Api\TopicController;              // << TAMBAHKAN IMPORT INI
+use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\SubMaterialController;
 use App\Http\Controllers\Api\UserPreferenceController;
 use App\Http\Controllers\Api\LearningHistoryController;
+use App\Http\Controllers\Auth\SocialLoginController;
+use App\Http\Controllers\Api\MaterialController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -19,7 +21,7 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-// Route Publik (tidak memerlukan autentikasi)
+// Route Publik 
 Route::post('/register', [RegisteredUserController::class, 'store'])
                 ->middleware('guest')
                 ->name('register');
@@ -35,31 +37,31 @@ Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])
 Route::post('/reset-password', [NewPasswordController::class, 'store'])
                 ->middleware('guest')
                 ->name('password.store');
-Route::get('/topics', [TopicController::class, 'index'])->name('topics.index');
+                
+Route::get('/materials', [MaterialController::class, 'index'])->name('materials.index');
+Route::get('/materials/{material}', [MaterialController::class, 'show'])->name('materials.show');
+
+Route::get('/auth/{provider}/redirect', [SocialLoginController::class, 'redirectToProvider'])->name('social.redirect');
+Route::get('/auth/{provider}/callback', [SocialLoginController::class, 'handleProviderCallback'])->name('social.callback');
 
 // Route yang memerlukan autentikasi (Sanctum)
 Route::middleware(['auth:sanctum'])->group(function () {
-    // Mengarahkan GET /user ke ProfileController@show
-    Route::get('/user', [ProfileController::class, 'show']); // << MODIFIKASI DI SINI
+    Route::get('/user', [ProfileController::class, 'show']); 
 
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
                 ->name('logout');
 
-    // Rute untuk update profil, ubah password, dll akan ditambahkan di sini:
+    // Rute untuk update profil, ubah password, dll.
     Route::post('/user/profile', [ProfileController::class, 'update']);
-    Route::post('/user/password', [ProfileController::class, 'updatePassword']);
+    Route::post('/user/password', [ProfileController::class, 'updatePassword']); // <-- HANYA SATU SEKARANG
     Route::post('/user/avatar', [ProfileController::class, 'uploadAvatar']);
     Route::delete('/user', [ProfileController::class, 'destroyAccount']);
-    Route::post('/user/password', [ProfileController::class, 'updatePassword']);
     Route::get('/user/preferences', [UserPreferenceController::class, 'index'])->name('user.preferences.index');
     Route::post('/user/preferences', [UserPreferenceController::class, 'store'])->name('user.preferences.store');
     Route::get('/user/learning-history', [LearningHistoryController::class, 'index'])->name('user.learning-history.index');
     Route::post('/materials/{material}/complete', [LearningHistoryController::class, 'store'])->name('materials.complete');
-    // Jika Anda menggunakan fitur verifikasi email (opsional untuk sekarang):
-    // Route::get('/verify-email/{id}/{hash}', VerifyEmailController::class)
-    //             ->middleware(['signed', 'throttle:6,1'])
-    //             ->name('verification.verify');
-    // Route::post('/email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
-    //             ->middleware(['throttle:6,1'])
-    //             ->name('verification.send');
+    Route::post('/materials/{material}/sub-materials', [SubMaterialController::class, 'store'])->name('sub-materials.store');
+    Route::get('/sub-materials/{sub_material}', [SubMaterialController::class, 'show'])->name('sub-materials.show');
+    Route::put('/sub-materials/{sub_material}', [SubMaterialController::class, 'update'])->name('sub-materials.update');
+    Route::delete('/sub-materials/{sub_material}', [SubMaterialController::class, 'destroy'])->name('sub-materials.destroy');
 });

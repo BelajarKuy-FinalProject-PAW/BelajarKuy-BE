@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Auth\LoginRequest; // Pastikan ini adalah LoginRequest yang sudah kita kustomisasi
-use App\Http\Resources\UserResource;     // Untuk memformat data user dalam respons
+use App\Http\Requests\Auth\LoginRequest; 
+use App\Http\Resources\UserResource;    
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Auth;     // Ini tetap digunakan untuk Auth::attempt
-
+use Illuminate\Support\Facades\Auth; 
+use Illuminate\Support\Facades\Log;    
 class AuthenticatedSessionController extends Controller
 {
     /**
@@ -19,24 +19,18 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): Response
     {
-        // Method authenticate() dari LoginRequest akan menangani validasi
-        // dan percobaan login (Auth::attempt). Jika gagal, akan throw ValidationException.
         $request->authenticate();
 
-        // Jika authenticate() berhasil, kita bisa mendapatkan user yang terotentikasi
-        $user = Auth::user(); // Atau $user = $request->user(); juga bisa setelah authenticate()
+        $user = Auth::user(); 
 
-        // Membuat token API untuk user
-        // Anda bisa memberi nama token yang lebih spesifik jika mau
-        $tokenName = 'api-token-' . $user->username; // Menggunakan username agar lebih unik
+        $tokenName = 'api-token-' . $user->username; 
         $token = $user->createToken($tokenName)->plainTextToken;
 
-        // Mengembalikan data user (menggunakan UserResource) dan token
         return response([
-            'message' => 'Login berhasil.', // Pesan sukses opsional
+            'message' => 'Login berhasil.', 
             'user' => new UserResource($user),
             'token' => $token
-        ]); // Status default 200 OK
+        ]); 
     }
 
     /**
@@ -47,12 +41,19 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): Response
     {
-        // Untuk API, logout berarti menghapus token yang digunakan untuk request saat ini
-        // Pastikan route ini dilindungi oleh middleware 'auth:sanctum'
-        if ($request->user()) { // Pastikan ada user yang terotentikasi
-            $request->user()->currentAccessToken()->delete();
-        }
+    $user = $request->user();
+    Log::info('[Logout Attempt] User ID: ' . ($user ? $user->id : 'No user authenticated for logout request'));
 
-        return response()->noContent(); // HTTP status 204 No Content, menandakan sukses tanpa body
+    if ($user) {
+        $currentToken = $user->currentAccessToken();
+        if ($currentToken) {
+            Log::info('[Logout Attempt] Token ID to delete: ' . $currentToken->id . ', Name: ' . $currentToken->name);
+            $currentToken->delete();
+            Log::info('[Logout Attempt] Token supposedly deleted from DB.');
+        } else {
+            Log::info('[Logout Attempt] No current access token found on user to delete.');
+        }
     }
+    return response()->noContent();
+}
 }

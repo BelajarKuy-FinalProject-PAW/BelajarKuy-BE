@@ -14,10 +14,13 @@ class LearningHistoryFactory extends Factory
      *
      * @return array<string, mixed>
      */
+    // database/factories/LearningHistoryFactory.php
     public function definition(): array
     {
-        return [
-            //
-        ];
+    return [
+        'user_id' => \App\Models\User::factory(),
+        'material_id' => \App\Models\Material::factory(),
+        'completed_at' => $this->faker->optional(0.7, null)->dateTimeThisYear(),
+    ];
     }
 }

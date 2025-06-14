@@ -41,7 +41,7 @@ class PasswordResetTest extends TestCase
 
             $response
                 ->assertSessionHasNoErrors()
-                ->assertStatus(200);
+                ->assertStatus(200); // Biasanya sukses reset password akan redirect atau memberi status OK
 
             return true;
         });

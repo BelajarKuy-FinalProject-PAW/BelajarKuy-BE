@@ -4,46 +4,38 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Http\Resources\TopicResource; 
+use App\Http\Resources\MaterialResource; // <-- Ganti dari TopicResource
 
 class UserPreferenceController extends Controller
 {
     /**
      * Display the authenticated user's current learning preferences.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
     public function index(Request $request)
     {
-        // Mengambil topik-topik yang sudah dipilih oleh user yang sedang login
-        // melalui relasi 'topics' yang sudah kita definisikan di model User.
-        $userPreferences = $request->user()->topics()->orderBy('name')->get();
-        return TopicResource::collection($userPreferences);
+        // Mengambil materi-materi yang sudah dipilih oleh user
+        $userPreferences = $request->user()->preferences()->orderBy('name')->get();
+        return MaterialResource::collection($userPreferences); // <-- Ganti dari TopicResource
     }
 
     /**
      * Store or update the authenticated user's learning preferences.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
      */
     public function store(Request $request)
-{
-    // Validasi input: kita mengharapkan array dari topic_ids
-    $validatedData = $request->validate([
-        'topic_ids' => ['sometimes', 'array'],
-        'topic_ids.*' => ['integer', 'exists:topics,id'], 
-    ]);
+    {
+        $validatedData = $request->validate([
+            'material_ids' => ['sometimes', 'array'],           // <-- Ganti dari topic_ids
+            'material_ids.*' => ['integer', 'exists:materials,id'], // <-- Ganti dari topics
+        ]);
 
-    $topicIds = $validatedData['topic_ids'] ?? [];
-    $request->user()->topics()->sync($topicIds);
+        $materialIds = $validatedData['material_ids'] ?? [];
+        $request->user()->preferences()->sync($materialIds); // Gunakan relasi preferences() yang baru
 
-    $updatedPreferences = $request->user()->topics()->orderBy('name')->get();
+        $updatedPreferences = $request->user()->preferences()->orderBy('name')->get();
 
-    return response()->json([
-        'message' => 'Preferensi belajar berhasil diperbarui.',
-        'preferences' => TopicResource::collection($updatedPreferences)
-    ]);
-}
+        return response()->json([
+            'message' => 'Preferensi belajar berhasil diperbarui.',
+            'preferences' => MaterialResource::collection($updatedPreferences) // <-- Ganti dari TopicResource
+        ]);
+    }
 }
